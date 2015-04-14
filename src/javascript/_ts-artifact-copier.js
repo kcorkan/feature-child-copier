@@ -39,6 +39,7 @@ Ext.define('Rally.technicalservices.data.ArtifactCopier',{
                 this._copyArtifact(model, record, copyFields).then({
                     scope: this,
                     success: function(result){
+                        Rally.ui.notify.Notifier.showCreate({artifact: result});
                         if (typeof result == 'object'){
                             //Copy collection fields
                             this._loadStories(record, storyCopyFields).then({
@@ -48,15 +49,16 @@ Ext.define('Rally.technicalservices.data.ArtifactCopier',{
                                     this._copyStories(stories, result, storyCopyFields).then({
                                         scope: this,
                                         success: function(results){
+
                                             var artifactsCreated = [];
                                             artifactsCreated.push(result);
                                             artifactsCreated.push(results);
                                             _.flatten(artifactsCreated);
-                                            alert('success');
+                                            Rally.ui.notify.Notifier.show({message: 'Copy complete'});
                                            // this.fireEvent('artifactscreated',artifactsCreated);
                                         },
                                         failure: function(operation){
-                                            alert('failed');
+                                            Rally.ui.notify.Notifier.showError({message: 'Error Creating Artifact: ' + operation.error.errors[0]});
                                            // this.fireEvent('copyerror',operation);
                                         }
                                     });
@@ -103,7 +105,11 @@ Ext.define('Rally.technicalservices.data.ArtifactCopier',{
                 var deferred = Ext.create('Deft.Deferred');
                 fn(storyModel, story, fields).then({
                     success: function(result){
+                        Rally.ui.notify.Notifier.showCreate({artifact: result});
                         deferred.resolve(result);
+                    },
+                    failure: function(operation){
+                        deferred.reject(operation);
                     }
                 });
                 return deferred;
@@ -132,7 +138,7 @@ Ext.define('Rally.technicalservices.data.ArtifactCopier',{
                 if (operation.wasSuccessful()){
                     deferred.resolve(record);
                 } else {
-                    deferred.resolve(operation.error.errors[0]);
+                    deferred.reject(operation);
                 }
             }
         });
@@ -154,7 +160,7 @@ Ext.define('Rally.technicalservices.data.ArtifactCopier',{
                 if (operation.wasSuccessful()){
                     deferred.resolve(record);
                 } else {
-                    deferred.resolve(operation.error.errors[0]);
+                    deferred.reject(operation);
                 }
             }
         });
