@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Feature Child Copier</title>
+    <!--  (c) 2015 Rally Software Development Corp.  All Rights Reserved. -->
+    <!--  Build Date: Mon Apr 13 2015 17:00:40 GMT-0700 (PDT) -->
+    
+    <script type="text/javascript">
+        var APP_BUILD_DATE = "Mon Apr 13 2015 17:00:40 GMT-0700 (PDT)";
+        var CHECKSUM = 3169311012;
+    </script>
+    
+    <script type="text/javascript" src="/apps/2.0/sdk.js"></script>
+
+    <script type="text/javascript">
+        Rally.onReady(function() {
+             
+/**
+ * A link that pops up a version dialog box
+ */
+
+Ext.define('Rally.technicalservices.InfoLink',{
+    extend: 'Ext.Component',
+    alias: 'widget.tsinfolink',
+    
+    /**
+     * @cfg {String} informationHtml
+     * Additional text to be displayed on the popup dialog (for exmaple,
+     * to add a description of the app's use or functionality)
+     */
+    informationHtml: null,
+    
+    /**
+     * 
+     * cfg {String} title
+     * The title for the dialog box
+     */
+     title: "Build Information",
+    
+    renderTpl: "<div id='{id}-infolinkWrap' class='tsinfolink'>i</div>",
+
+    initComponent: function() {
+        this.callParent(arguments);
+       
+    },
+    
+    onRender: function() {
+        this.callParent(arguments);
+        this.mon(this.el,'click',this.onClick,this);
+    },
+    _generateChecksum: function(string){
+        var chk = 0x12345678,
+            i;
+        string = string.replace(/var CHECKSUM = .*;/,"");
+        string = string.replace(/\s/g,"");  //Remove all whitespace from the string.
+        
+        for (i = 0; i < string.length; i++) {
+            chk += (string.charCodeAt(i) * i);
+        }
+    
+        return chk;
+    },
+    _checkChecksum: function(container) {
+        var me = this;
+        Ext.Ajax.request({
+            url: document.URL,
+            params: {
+                id: 1
+            },
+            success: function (response) {
+                text = response.responseText;
+                if ( CHECKSUM ) {
+                    if ( CHECKSUM !== me._generateChecksum(text) ) {
+                        console.log("Checksums don't match!");
+                        if ( me.dialog ) {
+                            me.dialog.add({xtype:'container',html:'Checksums do not match'});
+                        }
+                    }
+                }
+            }
+        });
+    },
+    onClick: function(e) {
+        var me = this;
+        this._checkChecksum(this);
+        
+        var dialog_items = [];
+        
+        if ( this.informationHtml ) {
+            dialog_items.push({
+                xtype:'container',
+                html: this.informationHtml
+            });
+        }
+                
+        dialog_items.push({
+            xtype:'container',
+            html:"This app was created by the Rally Technical Services Team."
+        });
+        
+        if ( APP_BUILD_DATE ) {
+            dialog_items.push({
+                xtype:'container',
+                html:'Build date/time: ' + APP_BUILD_DATE
+            });
+        }
+        
+        if (this.dialog){this.dialog.destroy();}
+        this.dialog = Ext.create('Rally.ui.dialog.Dialog',{
+            defaults: { padding: 5, margin: 5 },
+            closable: true,
+            draggable: true,
+            title: me.title,
+            items: dialog_items
+        });
+        this.dialog.show();
+    }
+});
+
+/*
+ */
+Ext.define('Rally.technicalservices.Logger',{
+    constructor: function(config){
+        Ext.apply(this,config);
+    },
+    log: function(args){
+        var timestamp = "[ " + Ext.util.Format.date(new Date(), "Y-m-d H:i:s.u") + " ]";
+        //var output_args = arguments;
+        //output_args.unshift( [ "[ " + timestamp + " ]" ] );
+        //output_args = Ext.Array.push(output_args,arguments);
+        
+        var output_args = [];
+        output_args = Ext.Array.push(output_args,[timestamp]);
+        output_args = Ext.Array.push(output_args, Ext.Array.slice(arguments,0));
+
+        window.console && console.log.apply(console,output_args);
+    }
+
+});
+
+Ext.define('Rally.technicalservices.data.ArtifactCopier',{
+    logger: new Rally.technicalservices.Logger(),
+    mixins: {
+        observable: 'Ext.util.Observable',
+    },
+    constructor: function(config) {
+        Ext.apply(this,config);
+        this.callParent(arguments);
+        this.addEvents('artifactscreated','copyerror');
+    },
+    _loadStories: function(record, storyCopyFields){
+        var deferred = Ext.create('Deft.Deferred');
+
+        record.getCollection('UserStories').load({
+            scope: this,
+            fetch: storyCopyFields,
+            callback: function(stories,operation,success){
+                deferred.resolve(stories);
+            }
+        });
+        return deferred;
+    },
+    _loadModel: function(type){
+        var deferred = Ext.create('Deft.Deferred');
+        Rally.data.ModelFactory.getModel({
+            type: type,
+            scope: this,
+            success: function(model) {
+                deferred.resolve(model);
+            }
+        });
+        return deferred;
+    },
+    copy: function(record, modelType, copyFields, storyCopyFields){
+        console.log('copy',modelType, copyFields);
+        this._loadModel(modelType).then({
+            scope: this,
+            success: function(model){
+                this._copyArtifact(model, record, copyFields).then({
+                    scope: this,
+                    success: function(result){
+                        if (typeof result == 'object'){
+                            //Copy collection fields
+                            this._loadStories(record, storyCopyFields).then({
+                                scope: this,
+                                success: function(stories){
+                                    this.logger.log('_loadStories returned',stories);
+                                    this._copyStories(stories, result, storyCopyFields).then({
+                                        scope: this,
+                                        success: function(results){
+                                            var artifactsCreated = [];
+                                            artifactsCreated.push(result);
+                                            artifactsCreated.push(results);
+                                            _.flatten(artifactsCreated);
+                                            alert('success');
+                                           // this.fireEvent('artifactscreated',artifactsCreated);
+                                        },
+                                        failure: function(operation){
+                                            alert('failed');
+                                           // this.fireEvent('copyerror',operation);
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+        });
+    },
+    _copyStories: function(stories, newParent, fieldsToCopy){
+        var deferred = Ext.create('Deft.Deferred');
+
+        this._loadModel('HierarchicalRequirement').then({
+            scope: this,
+            success: function(storyModel){
+                this._copyTemplateStories(storyModel, stories, newParent, fieldsToCopy).then({
+                    scope: this,
+                    success: function(results){
+                        deferred.resolve(results);
+                    },
+                    failure: function(operation){
+                        deferred.reject(operation);
+                    }
+                });
+            }
+        });
+
+        return deferred;
+    },
+    _copyTemplateStories: function(storyModel, stories, parent, fieldsToCopy){
+        var deferred = Ext.create('Deft.Deferred');
+        var promises = [];
+        Ext.each(stories, function(story){
+            var fields = {};
+            Ext.each(fieldsToCopy, function(f){
+                fields[f] = story.get(f);
+            });
+            fields['PortfolioItem'] = parent.get('_ref');
+
+            var fn = this._copyArtifactWithValues;
+            promises.push(function(){
+                var deferred = Ext.create('Deft.Deferred');
+                fn(storyModel, story, fields).then({
+                    success: function(result){
+                        deferred.resolve(result);
+                    }
+                });
+                return deferred;
+            });
+        },this);
+
+        Deft.Chain.sequence(promises,this).then({
+            scope: this,
+            success: function (results) {
+                deferred.resolve(results);
+            },
+            failure: function(operation){
+                deferred.reject(operation);
+            }
+        });
+        return deferred;
+
+    },
+    _copyArtifactWithValues: function(model, record, fieldsWithValues){
+        var deferred = Ext.create('Deft.Deferred');
+
+        var record = Ext.create(model, fieldsWithValues);
+        record.save({
+            callback: function(record, operation, success) {
+                console.log('artifact copied',record,success,operation);
+                if (operation.wasSuccessful()){
+                    deferred.resolve(record);
+                } else {
+                    deferred.resolve(operation.error.errors[0]);
+                }
+            }
+        });
+        return deferred;
+
+    },
+    _copyArtifact: function(model, record, fieldsToCopy){
+        var deferred = Ext.create('Deft.Deferred');
+
+        var fields = {};
+        Ext.each(fieldsToCopy, function(f){
+            fields[f] = record.get(f);
+        });
+
+        var record = Ext.create(model, fields);
+        record.save({
+            callback: function(record, operation, success) {
+                console.log('artifact copied',record,success,operation);
+                if (operation.wasSuccessful()){
+                    deferred.resolve(record);
+                } else {
+                    deferred.resolve(operation.error.errors[0]);
+                }
+            }
+        });
+        return deferred;
+    }
+});
+
+
+Ext.define("feature-child-copier", {
+    extend: 'Rally.app.App',
+    componentCls: 'app',
+    logger: new Rally.technicalservices.Logger(),
+    featureFetchFields: ['Name','Project','Description','Owner'],
+    storyFetchFields: ['Name','Description','Release','Owner','Project'],
+
+    defaults: { margin: 10 },
+    items: [
+        {xtype:'container',itemId:'message_box',tpl:'Hello, <tpl>{_refObjectName}</tpl>'},
+        {xtype:'container',itemId:'display_box'},
+        {xtype:'tsinfolink'}
+    ],
+    launch: function() {
+        var me = this;
+        this.down('#display_box').add({
+            xtype: 'rallybutton',
+            text: 'Select Feature...',
+            scope: this,
+            handler: this._launchArtifactSelector
+        });
+    },
+    _launchArtifactSelector: function(){
+        Ext.create('Rally.ui.dialog.ArtifactChooserDialog', {
+            artifactTypes: ['portfolioitem/feature'],
+            fetch: this.featureFetchFields,
+            autoShow: true,
+            height: 250,
+            title: 'Choose Feature To copy',
+            listeners: {
+                artifactchosen: this._onArtifactSelected,
+                scope: this
+            }
+        });
+    },
+    _onArtifactSelected: function(selector, selectedRecord){
+        this.logger.log('_onArtifactSelected', selectedRecord);
+        var artifactCopier = Ext.create('Rally.technicalservices.data.ArtifactCopier',{
+            scope: this,
+            listeners: {
+                artifactscreated: function(artifacts){
+                    console.log('artifactcreated',artifacts);
+                },
+                copyerror: function(operation){
+                    console.log('copyerror',operation)
+                }
+            }
+
+        });
+        artifactCopier.copy(selectedRecord,'PortfolioItem/Feature',this.featureFetchFields, this.storyFetchFields);
+    }
+});
+
+            
+               Rally.launchApp('feature-child-copier', {
+                   name: 'Feature Child Copier'
+               });
+        });
+    </script>
+    
+    <style type="text/css">
+
+.app {
+}
+.tsinfolink {
+    position:absolute;
+    right:0px;
+    width: 14px;
+    height: 14px;
+    border-radius: 7px;
+    text-align: center;
+    color: white;
+    background: #C0C0C0;
+    border-style: solid;
+    border-width: 1px;
+    margin-top: 25px;
+    margin-right: 5px;
+    cursor: pointer;
+}
+    </style>
+
+</head>
+<body></body>
+</html>
