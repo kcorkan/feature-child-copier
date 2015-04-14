@@ -3,11 +3,11 @@
 <head>
     <title>Feature Child Copier</title>
     <!--  (c) 2015 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Mon Apr 13 2015 17:00:40 GMT-0700 (PDT) -->
+    <!--  Build Date: Mon Apr 13 2015 17:17:20 GMT-0700 (PDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Mon Apr 13 2015 17:00:40 GMT-0700 (PDT)";
-        var CHECKSUM = 3169311012;
+        var APP_BUILD_DATE = "Mon Apr 13 2015 17:17:20 GMT-0700 (PDT)";
+        var CHECKSUM = 3262698292;
     </script>
     
     <script type="text/javascript" src="/apps/2.0/sdk.js"></script>
@@ -286,7 +286,7 @@ Ext.define('Rally.technicalservices.data.ArtifactCopier',{
         Ext.each(fieldsToCopy, function(f){
             fields[f] = record.get(f);
         });
-
+        console.log('featurefields', fields);
         var record = Ext.create(model, fields);
         record.save({
             callback: function(record, operation, success) {
@@ -307,8 +307,8 @@ Ext.define("feature-child-copier", {
     extend: 'Rally.app.App',
     componentCls: 'app',
     logger: new Rally.technicalservices.Logger(),
-    featureFetchFields: ['Name','Project','Description','Owner'],
-    storyFetchFields: ['Name','Description','Release','Owner','Project'],
+    featureFetchFields: ['Name','Project','Description','Owner','State','c_FeatureDeploymentType','c_FeatureType'],
+    storyFetchFields: ['Name','Description','Release','Owner','Project','c_BCSwimlanes','c_BCStates'],
 
     defaults: { margin: 10 },
     items: [
@@ -328,7 +328,7 @@ Ext.define("feature-child-copier", {
     _launchArtifactSelector: function(){
         Ext.create('Rally.ui.dialog.ArtifactChooserDialog', {
             artifactTypes: ['portfolioitem/feature'],
-            fetch: this.featureFetchFields,
+            storeConfig: {fetch: this.featureFetchFields},
             autoShow: true,
             height: 250,
             title: 'Choose Feature To copy',

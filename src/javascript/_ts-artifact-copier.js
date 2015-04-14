@@ -146,7 +146,7 @@ Ext.define('Rally.technicalservices.data.ArtifactCopier',{
         Ext.each(fieldsToCopy, function(f){
             fields[f] = record.get(f);
         });
-
+        console.log('featurefields', fields);
         var record = Ext.create(model, fields);
         record.save({
             callback: function(record, operation, success) {

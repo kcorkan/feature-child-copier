@@ -2,8 +2,8 @@ Ext.define("feature-child-copier", {
     extend: 'Rally.app.App',
     componentCls: 'app',
     logger: new Rally.technicalservices.Logger(),
-    featureFetchFields: ['Name','Project','Description','Owner'],
-    storyFetchFields: ['Name','Description','Release','Owner','Project'],
+    featureFetchFields: ['Name','Project','Description','Owner','State','c_FeatureDeploymentType','c_FeatureType'],
+    storyFetchFields: ['Name','Description','Release','Owner','Project','c_BCSwimlanes','c_BCStates'],
 
     defaults: { margin: 10 },
     items: [
@@ -23,7 +23,7 @@ Ext.define("feature-child-copier", {
     _launchArtifactSelector: function(){
         Ext.create('Rally.ui.dialog.ArtifactChooserDialog', {
             artifactTypes: ['portfolioitem/feature'],
-            fetch: this.featureFetchFields,
+            storeConfig: {fetch: this.featureFetchFields},
             autoShow: true,
             height: 250,
             title: 'Choose Feature To copy',
