@@ -36,8 +36,8 @@ Ext.define("feature-child-copier", {
     _onArtifactSelected: function(selector, selectedRecord){
         this.logger.log('_onArtifactSelected', selectedRecord);
         var artifactCopier = Ext.create('Rally.technicalservices.data.ArtifactCopier',{
-            scope: this,
             listeners: {
+                scope: this,
                 artifactscreated: function(artifacts){
                     console.log('artifactcreated',artifacts);
                 },

@@ -1,12 +1,12 @@
 Ext.define('Rally.technicalservices.data.ArtifactCopier',{
     logger: new Rally.technicalservices.Logger(),
     mixins: {
-        observable: 'Ext.util.Observable',
+        observable: 'Ext.util.Observable'
     },
     constructor: function(config) {
         Ext.apply(this,config);
         this.callParent(arguments);
-        this.addEvents('artifactscreated','copyerror');
+        this.addEvents('copyerror','artifactscreated');
     },
     _loadStories: function(record, storyCopyFields){
         var deferred = Ext.create('Deft.Deferred');
@@ -32,7 +32,7 @@ Ext.define('Rally.technicalservices.data.ArtifactCopier',{
         return deferred;
     },
     copy: function(record, modelType, copyFields, storyCopyFields){
-        console.log('copy',modelType, copyFields);
+
         this._loadModel(modelType).then({
             scope: this,
             success: function(model){
@@ -55,16 +55,28 @@ Ext.define('Rally.technicalservices.data.ArtifactCopier',{
                                             artifactsCreated.push(results);
                                             _.flatten(artifactsCreated);
                                             Rally.ui.notify.Notifier.show({message: 'Copy complete'});
-                                           // this.fireEvent('artifactscreated',artifactsCreated);
                                         },
                                         failure: function(operation){
-                                            Rally.ui.notify.Notifier.showError({message: 'Error Creating Artifact: ' + operation.error.errors[0]});
-                                           // this.fireEvent('copyerror',operation);
+
+                                            Rally.ui.notify.Notifier.showError({message: 'Error Creating child artifacts: ' + operation.error.errors[0]});
                                         }
                                     });
+                                },
+                                failure: function(operation){
+                                    Rally.ui.notify.Notifier.showError({message: 'Error loading stories: ' + operation.error.errors[0]});
                                 }
                             });
                         }
+                    },
+                    failure: function(operation){
+                        var msg = "-- Error(s) while copying " + record.get('FormattedID') + " --";
+                        if (operation && operation.error){
+                            _.each(operation.error.errors, function(err){
+                                msg += '<br/>' + err;
+                            });
+                        }
+                        Rally.ui.notify.Notifier.showError({message: msg}); // 'Error copying Artifact:  ' + operation.error.errors.join(',')});
+                        //this.fireEvent('copyerror',msg);
                     }
                 });
             }
@@ -104,6 +116,7 @@ Ext.define('Rally.technicalservices.data.ArtifactCopier',{
             promises.push(function(){
                 var deferred = Ext.create('Deft.Deferred');
                 fn(storyModel, story, fields).then({
+                    scope: this,
                     success: function(result){
                         Rally.ui.notify.Notifier.showCreate({artifact: result});
                         deferred.resolve(result);
@@ -133,9 +146,10 @@ Ext.define('Rally.technicalservices.data.ArtifactCopier',{
 
         var record = Ext.create(model, fieldsWithValues);
         record.save({
+            scope: this,
             callback: function(record, operation, success) {
                 console.log('artifact copied',record,success,operation);
-                if (operation.wasSuccessful()){
+                if (success){
                     deferred.resolve(record);
                 } else {
                     deferred.reject(operation);
@@ -152,11 +166,11 @@ Ext.define('Rally.technicalservices.data.ArtifactCopier',{
         Ext.each(fieldsToCopy, function(f){
             fields[f] = record.get(f);
         });
-        console.log('featurefields', fields);
+
         var record = Ext.create(model, fields);
         record.save({
+            scope: this,
             callback: function(record, operation, success) {
-                console.log('artifact copied',record,success,operation);
                 if (operation.wasSuccessful()){
                     deferred.resolve(record);
                 } else {
