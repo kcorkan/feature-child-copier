@@ -58,12 +58,12 @@ Ext.define('Rally.technicalservices.data.ArtifactCopier',{
                                         },
                                         failure: function(operation){
 
-                                            Rally.ui.notify.Notifier.showError({message: 'Error Creating child artifacts: ' + operation.error.errors[0]});
+                                            Rally.ui.notify.Notifier.showError({message: 'Error Creating child artifacts: ' + operation.error.errors.join(',')});
                                         }
                                     });
                                 },
                                 failure: function(operation){
-                                    Rally.ui.notify.Notifier.showError({message: 'Error loading stories: ' + operation.error.errors[0]});
+                                    Rally.ui.notify.Notifier.showError({message: 'Error loading stories: ' + operation.error.errors.join(',')});
                                 }
                             });
                         }

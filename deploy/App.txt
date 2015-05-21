@@ -3,11 +3,11 @@
 <head>
     <title>Feature Child Copier</title>
     <!--  (c) 2015 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Thu May 21 2015 10:07:05 GMT-0700 (PDT) -->
+    <!--  Build Date: Thu May 21 2015 10:11:15 GMT-0700 (PDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Thu May 21 2015 10:07:05 GMT-0700 (PDT)";
-        var CHECKSUM = 3658948157;
+        var APP_BUILD_DATE = "Thu May 21 2015 10:11:15 GMT-0700 (PDT)";
+        var CHECKSUM = 3668301180;
     </script>
     
     <script type="text/javascript" src="/apps/2.0/sdk.js"></script>
@@ -198,12 +198,12 @@ Ext.define('Rally.technicalservices.data.ArtifactCopier',{
                                         },
                                         failure: function(operation){
 
-                                            Rally.ui.notify.Notifier.showError({message: 'Error Creating child artifacts: ' + operation.error.errors[0]});
+                                            Rally.ui.notify.Notifier.showError({message: 'Error Creating child artifacts: ' + operation.error.errors.join(',')});
                                         }
                                     });
                                 },
                                 failure: function(operation){
-                                    Rally.ui.notify.Notifier.showError({message: 'Error loading stories: ' + operation.error.errors[0]});
+                                    Rally.ui.notify.Notifier.showError({message: 'Error loading stories: ' + operation.error.errors.join(',')});
                                 }
                             });
                         }
