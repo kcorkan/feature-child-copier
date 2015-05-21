@@ -2,7 +2,7 @@ Ext.define("feature-child-copier", {
     extend: 'Rally.app.App',
     componentCls: 'app',
     logger: new Rally.technicalservices.Logger(),
-    featureFetchFields: ['Name','Project','Description','Owner','State','c_FeatureDeploymentType','c_FeatureType'],
+    featureFetchFields: ['Name','Project','Description','Owner','State','c_FeatureDeploymentType','c_FeatureType','c_FeatureTargetSprint','c_CodeDeploymentSchedule'],
     storyFetchFields: ['Name','Description','Release','Owner','Project','c_BCSwimlanes','c_BCStates'],
 
     defaults: { margin: 10 },

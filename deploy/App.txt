@@ -3,11 +3,11 @@
 <head>
     <title>Feature Child Copier</title>
     <!--  (c) 2015 Rally Software Development Corp.  All Rights Reserved. -->
-    <!--  Build Date: Thu May 21 2015 10:11:15 GMT-0700 (PDT) -->
+    <!--  Build Date: Thu May 21 2015 10:46:24 GMT-0700 (PDT) -->
     
     <script type="text/javascript">
-        var APP_BUILD_DATE = "Thu May 21 2015 10:11:15 GMT-0700 (PDT)";
-        var CHECKSUM = 3668301180;
+        var APP_BUILD_DATE = "Thu May 21 2015 10:46:24 GMT-0700 (PDT)";
+        var CHECKSUM = 3709013335;
     </script>
     
     <script type="text/javascript" src="/apps/2.0/sdk.js"></script>
@@ -327,7 +327,7 @@ Ext.define("feature-child-copier", {
     extend: 'Rally.app.App',
     componentCls: 'app',
     logger: new Rally.technicalservices.Logger(),
-    featureFetchFields: ['Name','Project','Description','Owner','State','c_FeatureDeploymentType','c_FeatureType'],
+    featureFetchFields: ['Name','Project','Description','Owner','State','c_FeatureDeploymentType','c_FeatureType','c_FeatureTargetSprint','c_CodeDeploymentSchedule'],
     storyFetchFields: ['Name','Description','Release','Owner','Project','c_BCSwimlanes','c_BCStates'],
 
     defaults: { margin: 10 },
